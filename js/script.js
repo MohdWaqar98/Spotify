@@ -41,7 +41,7 @@ async function getSongs(folder) {
         songUL.innerHTML = songUL.innerHTML + `<li><img class="invert" width="34" src="img/music.svg" alt="">
                             <div class="info">
                                 <div> ${song.replaceAll("%20", " ")}</div>
-                                <div>Harry</div>
+                                <div>Waqar</div>
                             </div>
                             <div class="playnow">
                                 <span>Play Now</span>
@@ -73,51 +73,63 @@ const playMusic = (track, pause = false) => {
 }
 
 async function displayAlbums() {
-    console.log("displaying albums")
-    let a = await fetch(`/songs/`)
-    let response = await a.text();
-    let div = document.createElement("div")
-    div.innerHTML = response;
-    let anchors = div.getElementsByTagName("a")
-    let cardContainer = document.querySelector(".cardContainer")
-    let array = Array.from(anchors)
-    for (let index = 0; index < array.length; index++) {
-        const e = array[index]; 
-        if (e.href.includes("/songs") && !e.href.includes(".htaccess")) {
-            let folder = e.href.split("/").slice(-2)[0]
-            // Get the metadata of the folder
-            let a = await fetch(`/songs/${folder}/info.json`)
-            let response = await a.json(); 
-            cardContainer.innerHTML = cardContainer.innerHTML + ` <div data-folder="${folder}" class="card">
-            <div class="play">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000" stroke-width="1.5"
-                        stroke-linejoin="round" />
-                </svg>
-            </div>
+    console.log("displaying albums");
 
-            <img src="/songs/${folder}/cover.jpg" alt="">
-            <h2>${response.title}</h2>
-            <p>${response.description}</p>
-        </div>`
+    let a = await fetch(`/songs/`);
+    let response = await a.text();
+
+    let div = document.createElement("div");
+    div.innerHTML = response;
+
+    let anchors = div.getElementsByTagName("a");
+    let cardContainer = document.querySelector(".cardContainer");
+    let array = Array.from(anchors);
+
+    for (let index = 0; index < array.length; index++) {
+        const e = array[index];
+
+        if (e.href.includes("/songs")) {
+            let url = new URL(e.href);
+            let folder = url.pathname.split("/")[2];
+
+            try {
+                let a = await fetch(`/songs/${folder}/info.json`);
+                let info = await a.json();
+
+                cardContainer.innerHTML += `
+                <div data-folder="${folder}" class="card">
+                    <div class="play">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000" stroke-width="1.5"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+
+                    <img src="/songs/${folder}/cover.jpg" alt="">
+                    <h2>${info.title}</h2>
+                    <p>${info.description}</p>
+                </div>`;
+            } catch (err) {
+                console.error(`Error loading info.json for ${folder}:`, err);
+            }
         }
     }
 
     // Load the playlist whenever card is clicked
-    Array.from(document.getElementsByClassName("card")).forEach(e => { 
+    Array.from(document.getElementsByClassName("card")).forEach(e => {
         e.addEventListener("click", async item => {
-            console.log("Fetching Songs")
-            songs = await getSongs(`songs/${item.currentTarget.dataset.folder}`)  
-            playMusic(songs[0])
-
-        })
-    })
+            console.log("Fetching Songs");
+            songs = await getSongs(`songs/${item.currentTarget.dataset.folder}`);
+            playMusic(songs[0]);
+        });
+    });
 }
+
 
 async function main() {
     // Get the list of all the songs
-    await getSongs("songs/ncs")
+    await getSongs("songs/Alif_laila")
     playMusic(songs[0], true)
 
     // Display all the albums on the page
