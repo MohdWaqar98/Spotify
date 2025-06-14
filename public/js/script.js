@@ -13,28 +13,24 @@ function secondsToMinutesSeconds(seconds) {
 
 async function getSongs(folder) {
     currFolder = folder;
-    let res = await fetch(`${folder}/`);
-    let text = await res.text();
-    let div = document.createElement("div");
-    div.innerHTML = text;
-    let as = div.getElementsByTagName("a");
-
-    songs = [];
-    for (let a of as) {
-        if (a.href.endsWith(".mp3")) {
-            songs.push(decodeURIComponent(a.href.split(`${folder}/`)[1]));
-        }
+    try {
+        let res = await fetch(`${folder}/songs.json`);
+        songs = await res.json(); // Load songs from songs.json
+    } catch (err) {
+        console.error("songs.json loading failed: ", err);
+        songs = [];
     }
 
     // ✅ Show songs in the left panel
     let songUL = document.querySelector(".songList ul");
     songUL.innerHTML = "";
+
     for (const song of songs) {
         songUL.innerHTML += `
             <li>
                 <img class="invert" width="34" src="img/music.svg" alt="song-icon">
                 <div class="info">
-                    <div>${song.replaceAll("%20", " ")}</div>
+                    <div>${decodeURIComponent(song)}</div>
                     <div>Waqar</div>
                 </div>
                 <div class="playnow">
@@ -44,7 +40,6 @@ async function getSongs(folder) {
             </li>`;
     }
 
-    // ✅ Add click listeners to play each song
     Array.from(songUL.getElementsByTagName("li")).forEach((e, i) => {
         e.addEventListener("click", () => {
             playMusic(songs[i]);
@@ -53,6 +48,7 @@ async function getSongs(folder) {
 
     return songs;
 }
+
 
 function playMusic(track, pause = false) {
     currentSong.src = `${currFolder}/` + encodeURIComponent(track);
